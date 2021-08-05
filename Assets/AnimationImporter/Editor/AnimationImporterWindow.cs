@@ -88,7 +88,7 @@ namespace AnimationImporter
 				ShowAsepriteApplicationSelection();
 
 				EditorGUILayout.Space();
-				
+
 				ShowAsepriteScriptsSelection();
 
 				EditorGUILayout.Space();
@@ -141,7 +141,7 @@ namespace AnimationImporter
 			ShowAsepriteApplicationSelection();
 
 			GUILayout.Space(5f);
-			
+
 			ShowAsepriteScriptsSelection();
 
 			GUILayout.Space(5f);
@@ -181,6 +181,11 @@ namespace AnimationImporter
 			importer.sharedData.automaticImporting = EditorGUILayout.Toggle("Automatic Import", importer.sharedData.automaticImporting);
 			EditorGUILayout.EndHorizontal();
 			EditorGUILayout.LabelField("Looks for existing Animation Controller with same name.");
+			
+			ShowHeadline("Flip Animation Import");
+			EditorGUILayout.BeginHorizontal();
+			importer.sharedData.flipAnimationImporting = EditorGUILayout.Toggle("Flip Animation Import", importer.sharedData.flipAnimationImporting);
+			EditorGUILayout.EndHorizontal();
 
 			/*
 				animations that do not loop
@@ -303,7 +308,7 @@ namespace AnimationImporter
 				EditorGUILayout.HelpBox(fileErrorMessage, MessageType.Warning);
 			}
 		}
-		
+
 		private void ShowAsepriteScriptsSelection()
 		{
 			GUILayout.BeginHorizontal();

@@ -69,10 +69,10 @@ namespace AnimationImporter
 				}
 			}
 		}
-		
+
 		string _asepriteScriptsPath = "";
 		public string asepriteScriptsPath
-		{
+			{
 			get
 			{
 				return _asepriteScriptsPath;
@@ -178,7 +178,7 @@ namespace AnimationImporter
 				if (!File.Exists(_asepritePath))
 					_asepritePath = "";
 			}
-			
+
 			if (PlayerPrefs.HasKey(PREFS_PREFIX + "asepriteScriptsPath"))
 			{
 				_asepriteScriptsPath = PlayerPrefs.GetString(PREFS_PREFIX + "asepriteScriptsPath");
@@ -468,7 +468,14 @@ namespace AnimationImporter
 
 			foreach (var animation in animationInfo.animations)
 			{
-				animationInfo.CreateAnimation(animation, pathForAnimations, masterName, sharedData.targetObjectType);
+				if (sharedData.flipAnimationImporting)
+				{
+					animationInfo.CreateFlipAnimation(animation, pathForAnimations, masterName);
+				}
+				else
+				{
+					animationInfo.CreateAnimation(animation, pathForAnimations, masterName, sharedData.targetObjectType);
+				}
 			}
 		}
 

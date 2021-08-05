@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using System.Linq;
+using KoheiUtils;
 
 namespace AnimationImporter
 {
@@ -23,6 +24,7 @@ namespace AnimationImporter
 
 		// final animation clip; saved here for usage when building the AnimatorController
 		public AnimationClip animationClip;
+		public FlipAnimInfo flipAnimationInfo;
 
 		// ================================================================================
 		//  temporary data, only used for first import

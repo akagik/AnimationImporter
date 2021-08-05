@@ -39,7 +39,7 @@ namespace AnimationImporter.Aseprite
 		//  static constructor, registering plugin
 		// --------------------------------------------------------------------------------
 
-		static AsepriteImporter()
+		static AsepriteImporter ()
 		{
 			AsepriteImporter importer = new AsepriteImporter();
 			AnimationImporter.RegisterImporter(importer, "ase", "aseprite");
@@ -337,25 +337,44 @@ namespace AnimationImporter.Aseprite
 			foreach (var item in frameTags)
 			{
 				JSONObject frameTag = item.Obj;
-				ImportedAnimation anim = new ImportedAnimation();
-				anim.name = frameTag["name"].Str;
-				anim.firstSpriteIndex = (int)(frameTag["from"].Number);
-				anim.lastSpriteIndex = (int)(frameTag["to"].Number);
-
-				switch (frameTag["direction"].Str)
+				
+				if (frameTag["name"].Str.StartsWith("ev_"))
 				{
-					default:
-						anim.direction = PlaybackDirection.Forward;
-						break;
-					case "reverse":
-						anim.direction = PlaybackDirection.Reverse;
-						break;
-					case "pingpong":
-						anim.direction = PlaybackDirection.PingPong;
-						break;
-				}
+					ImportedAnimationEvent ev = new ImportedAnimationEvent();
+					int firstSpriteIndex = (int)(frameTag["from"].Number);
+					int lastSpriteIndex = (int)(frameTag["to"].Number);
 
-				animationSheet.animations.Add(anim);
+					if (firstSpriteIndex != lastSpriteIndex)
+					{
+						Debug.Log("Multiple frame event trigger tag is not supported: " + frameTag["name"]);
+					}
+
+					ev.name = frameTag["name"].Str.Substring(3);
+					ev.spriteIndex = firstSpriteIndex;
+					animationSheet.events.Add(ev);
+				}
+				else
+				{
+					ImportedAnimation anim = new ImportedAnimation();
+					anim.name = frameTag["name"].Str;
+					anim.firstSpriteIndex = (int)(frameTag["from"].Number);
+					anim.lastSpriteIndex = (int)(frameTag["to"].Number);
+
+					switch (frameTag["direction"].Str)
+					{
+						default:
+							anim.direction = PlaybackDirection.Forward;
+							break;
+						case "reverse":
+							anim.direction = PlaybackDirection.Reverse;
+							break;
+						case "pingpong":
+							anim.direction = PlaybackDirection.PingPong;
+							break;
+					}
+
+					animationSheet.animations.Add(anim);
+				}
 			}
 
 			return true;
@@ -385,6 +404,12 @@ namespace AnimationImporter.Aseprite
 				frame.duration = (int)item.Obj["duration"].Number;
 
 				animationSheet.frames.Add(frame);
+			}
+
+			// 各イベントトリガーをフレームにセットする.
+			foreach (var ev in animationSheet.events)
+			{
+				animationSheet.frames[ev.spriteIndex].eventName = ev.name;
 			}
 
 			return true;

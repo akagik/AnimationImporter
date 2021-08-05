@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using UnityEditor;
 using System.Linq;
+using KoheiUtils;
 
 namespace AnimationImporter
 {
@@ -25,6 +26,7 @@ namespace AnimationImporter
 
 		public List<ImportedAnimationFrame> frames = new List<ImportedAnimationFrame>();
 		public List<ImportedAnimation> animations = new List<ImportedAnimation>();
+		public List<ImportedAnimationEvent> events = new List<ImportedAnimationEvent>();
 
 		public bool hasAnimations
 		{
@@ -100,6 +102,51 @@ namespace AnimationImporter
 
 			return null;
 		}
+		
+		public void CreateFlipAnimation(ImportedAnimation anim, string basePath, string masterName)
+		{
+			FlipAnimInfo clip;
+            string fileName = basePath + "/" + masterName + "_" + anim.name + ".asset";
+			bool isLooping = anim.isLooping;
+
+			// check if animation file already exists
+			clip = AssetDatabase.LoadAssetAtPath<FlipAnimInfo>(fileName);
+			if (clip != null)
+			{
+				// already exists
+			}
+			else
+			{
+				clip = ScriptableObject.CreateInstance<FlipAnimInfo>();
+				AssetDatabase.CreateAsset(clip, fileName);
+			}
+
+			// convert keyframes
+			ImportedAnimationFrame[] srcKeyframes = anim.ListFramesAccountingForPlaybackDirection().ToArray();
+
+			clip.sprites = srcKeyframes.Select(f => f.sprite).ToArray();
+			List<FlipAnimationEventTrigger> events = new List<FlipAnimationEventTrigger>();
+
+			for (int i = 0; i < srcKeyframes.Length; i++)
+			{
+				var f = srcKeyframes[i];
+
+				if (!string.IsNullOrEmpty(f.eventName))
+				{
+					events.Add(new FlipAnimationEventTrigger
+					{
+						index = i,
+						name = f.eventName
+					});
+				}
+			}
+
+			clip.triggers = events.ToArray();
+			clip.secPerFrame = (float) srcKeyframes[0].duration / 1000f;
+			
+			EditorUtility.SetDirty(clip);
+			anim.flipAnimationInfo = clip;
+		}
 
 		public void CreateAnimation(ImportedAnimation anim, string basePath, string masterName, AnimationTargetObjectType targetType)
 		{
@@ -136,6 +183,8 @@ namespace AnimationImporter
 			ImportedAnimationFrame[] srcKeyframes = anim.ListFramesAccountingForPlaybackDirection().ToArray();
 			ObjectReferenceKeyframe[] keyFrames = new ObjectReferenceKeyframe[srcKeyframes.Length + 1];
 			float timeOffset = 0f;
+			
+			List<AnimationEvent> events = new List<AnimationEvent>();
 
 			for (int i = 0; i < srcKeyframes.Length; i++)
 			{
@@ -145,6 +194,16 @@ namespace AnimationImporter
 					time = timeOffset,
 					value = srcKeyframes[i].sprite
 				};
+
+				// イベントがある場合はイベントも追加する.
+				if (!string.IsNullOrEmpty(srcKeyframes[i].eventName))
+				{
+					AnimationEvent ev = new AnimationEvent();
+					ev.time = timeOffset;
+					ev.stringParameter = srcKeyframes[i].eventName;
+					ev.functionName = "HandleEvent";
+					events.Add(ev);
+				}
 
 				// add duration of frame in seconds
 				timeOffset += srcKeyframes[i].duration / 1000f;
@@ -156,22 +215,25 @@ namespace AnimationImporter
 				time = timeOffset - (1f / clip.frameRate), // substract the duration of one frame
 				value = srcKeyframes.Last().sprite
 			};
-
+			
 			// save curve into clip, either for SpriteRenderer, Image, or both
 			if (targetType == AnimationTargetObjectType.SpriteRenderer)
 			{
 				AnimationUtility.SetObjectReferenceCurve(clip, AnimationClipUtility.spriteRendererCurveBinding, keyFrames);
 				AnimationUtility.SetObjectReferenceCurve(clip, AnimationClipUtility.imageCurveBinding, null);
+				AnimationUtility.SetAnimationEvents(clip, events.ToArray());
 			}
 			else if (targetType == AnimationTargetObjectType.Image)
 			{
 				AnimationUtility.SetObjectReferenceCurve(clip, AnimationClipUtility.spriteRendererCurveBinding, null);
 				AnimationUtility.SetObjectReferenceCurve(clip, AnimationClipUtility.imageCurveBinding, keyFrames);
+				AnimationUtility.SetAnimationEvents(clip, events.ToArray());
 			}
 			else if (targetType == AnimationTargetObjectType.SpriteRendererAndImage)
 			{
 				AnimationUtility.SetObjectReferenceCurve(clip, AnimationClipUtility.spriteRendererCurveBinding, keyFrames);
 				AnimationUtility.SetObjectReferenceCurve(clip, AnimationClipUtility.imageCurveBinding, keyFrames);
+				AnimationUtility.SetAnimationEvents(clip, events.ToArray());
 			}
 
 			EditorUtility.SetDirty(clip);

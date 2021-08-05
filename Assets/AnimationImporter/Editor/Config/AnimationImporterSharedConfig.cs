@@ -26,6 +26,21 @@ namespace AnimationImporter
 				_automaticImporting = value;
 			}
 		}
+		
+		[SerializeField]
+		private bool _flipAnimationImporting = false;
+
+		public bool flipAnimationImporting
+		{
+			get
+			{
+				return _flipAnimationImporting;
+			}
+			set
+			{
+				_flipAnimationImporting = value;
+			}
+		}
 
 		// sprite import values
 		[SerializeField]
