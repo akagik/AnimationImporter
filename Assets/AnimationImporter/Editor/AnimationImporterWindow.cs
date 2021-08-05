@@ -88,6 +88,10 @@ namespace AnimationImporter
 				ShowAsepriteApplicationSelection();
 
 				EditorGUILayout.Space();
+				
+				ShowAsepriteScriptsSelection();
+
+				EditorGUILayout.Space();
 
 				GUILayout.Label("Aseprite has to be installed on this machine because the Importer calls Aseprite through the command line for creating images and getting animation data.", _infoTextStyle);
 			}
@@ -135,6 +139,10 @@ namespace AnimationImporter
 			*/
 
 			ShowAsepriteApplicationSelection();
+
+			GUILayout.Space(5f);
+			
+			ShowAsepriteScriptsSelection();
 
 			GUILayout.Space(5f);
 
@@ -292,6 +300,40 @@ namespace AnimationImporter
 			{
 				var fileErrorMessage = string.Format(
 					"Cannot find Aseprite at the specified path. Use the Select button to locate the application.");
+				EditorGUILayout.HelpBox(fileErrorMessage, MessageType.Warning);
+			}
+		}
+		
+		private void ShowAsepriteScriptsSelection()
+		{
+			GUILayout.BeginHorizontal();
+			GUILayout.Label("Aseprite Scripts Path");
+
+			string newPath = importer.asepriteScriptsPath;
+
+			if (GUILayout.Button("Select"))
+			{
+				var path = EditorUtility.OpenFolderPanel(
+					"Select Aseprite Scripts Folder",
+					Application.dataPath,
+					"");
+				if (!string.IsNullOrEmpty(path))
+				{
+					newPath = path;
+				}
+			}
+			GUILayout.EndHorizontal();
+
+			GUILayout.BeginHorizontal();
+			importer.asepriteScriptsPath = GUILayout.TextField(newPath, GUILayout.MaxWidth(300f));
+
+			GUILayout.EndHorizontal();
+
+			if(!Directory.Exists(AnimationImporter.Instance.asepriteScriptsPath))
+			{
+				Debug.Log(AnimationImporter.Instance.asepriteScriptsPath);
+				var fileErrorMessage = string.Format(
+					"Cannot find Aseprite Scripts at the specified path. Use the Select button to locate the scripts folder.");
 				EditorGUILayout.HelpBox(fileErrorMessage, MessageType.Warning);
 			}
 		}

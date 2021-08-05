@@ -69,6 +69,23 @@ namespace AnimationImporter
 				}
 			}
 		}
+		
+		string _asepriteScriptsPath = "";
+		public string asepriteScriptsPath
+		{
+			get
+			{
+				return _asepriteScriptsPath;
+			}
+			set
+			{
+				if (_asepriteScriptsPath != value)
+				{
+					_asepriteScriptsPath = value;
+					SaveUserConfig();
+				}
+			}
+		}
 
 		private RuntimeAnimatorController _baseController = null;
 		public RuntimeAnimatorController baseController
@@ -161,6 +178,18 @@ namespace AnimationImporter
 				if (!File.Exists(_asepritePath))
 					_asepritePath = "";
 			}
+			
+			if (PlayerPrefs.HasKey(PREFS_PREFIX + "asepriteScriptsPath"))
+			{
+				_asepriteScriptsPath = PlayerPrefs.GetString(PREFS_PREFIX + "asepriteScriptsPath");
+			}
+			else
+			{
+				_asepriteScriptsPath = Path.Combine("AnimationImporterForHorizon", "Assets", "AnimationImporter", "Editor", "LuaScripts");
+
+				if (!Directory.Exists(_asepriteScriptsPath))
+					_asepriteScriptsPath = "";
+			}
 
 			if (PlayerPrefs.HasKey(PREFS_PREFIX + "baseControllerPath"))
 			{
@@ -175,6 +204,7 @@ namespace AnimationImporter
 		private void SaveUserConfig()
 		{
 			PlayerPrefs.SetString(PREFS_PREFIX + "asepritePath", _asepritePath);
+			PlayerPrefs.SetString(PREFS_PREFIX + "asepriteScriptsPath", _asepriteScriptsPath);
 
 			if (_baseController != null)
 			{
