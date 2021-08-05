@@ -135,7 +135,7 @@ namespace AnimationImporter.Aseprite
 			paramsBuilder.Append("--data " + delimiter + job.name + ".json" + delimiter + " --sheet " + delimiter + job.name + ".png" + delimiter + " " + job.sheetConfigParameter + " --list-tags --format json-array ");
 			// paramsBuilder.Append(" --sheet-type packed ");
 			// paramsBuilder.Append(" --trim ");
-			paramsBuilder.Append(" --layer head-pos ");
+			// paramsBuilder.Append(" --layer head-pos ");
 			paramsBuilder.Append(delimiter + job.fileName + delimiter);
 
 			string parameters = paramsBuilder.ToString();
