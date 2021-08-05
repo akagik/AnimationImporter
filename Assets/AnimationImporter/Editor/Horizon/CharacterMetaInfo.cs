@@ -1,20 +1,16 @@
 using UnityEngine;
 
-[System.Serializable]
-public class CharacterMetaInfo
+namespace AnimationImporter
 {
-    public FrameInfo[] frames;
-
     [System.Serializable]
-    public class FrameInfo
+    public class CharacterMetaInfo
     {
-        public PartInfo head;
-    }
+        public FrameInfo[] frames;
 
-    [System.Serializable]
-    public class PartInfo
-    {
-        public int index;
-        public Vector2 pos;
+        [System.Serializable]
+        public class FrameInfo
+        {
+            public CharaPartInfo head;
+        }
     }
 }

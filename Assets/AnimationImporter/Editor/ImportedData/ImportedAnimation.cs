@@ -24,7 +24,7 @@ namespace AnimationImporter
 
 		// final animation clip; saved here for usage when building the AnimatorController
 		public AnimationClip animationClip;
-		public FlipAnimInfo flipAnimationInfo;
+		public CharaAnimInfo flipAnimationInfo;
 
 		// ================================================================================
 		//  temporary data, only used for first import

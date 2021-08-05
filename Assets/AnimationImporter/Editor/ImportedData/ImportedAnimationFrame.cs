@@ -30,7 +30,9 @@ namespace AnimationImporter
 
 		// reference to the Sprite that was created with this frame information
 		public Sprite sprite = null;
-
+		
 		public string eventName = "";
+
+		public CharaPartInfo headInfo;
 	}
 }

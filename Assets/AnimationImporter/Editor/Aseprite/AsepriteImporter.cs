@@ -51,24 +51,26 @@ namespace AnimationImporter.Aseprite
 
 		public ImportedAnimationSheet Import(AnimationImportJob job, AnimationImporterSharedConfig config)
 		{
-			if (CreateMetaInfo(job))
-			{
-				var metaInfo = GetMetaInfoFromJsonFile(job);
+			bool successMakeSprite = CreateSpriteAtlasAndMetaFile(job);
+			bool successMakePartInfo = CreateMetaInfo(job);
 
-				// Debug.Log(metaInfo.frames.Length);
-				// Debug.Log(metaInfo.frames[0].head.pos);
+			if (!successMakeSprite)
+			{
+				Debug.LogError("Fails to make sprite sheet.");
+				return null;
 			}
 			
-			if (CreateSpriteAtlasAndMetaFile(job))
+			if (!successMakePartInfo)
 			{
-				AssetDatabase.Refresh();
-
-				ImportedAnimationSheet animationSheet = CreateAnimationSheetFromMetaData(job, config);
-
-				return animationSheet;
+				Debug.LogError("Fails to make character part meta json.");
+				return null;
 			}
+			
+			AssetDatabase.Refresh();
 
-			return null;
+			ImportedAnimationSheet animationSheet = CreateAnimationSheetFromMetaData(job, config);
+
+			return animationSheet;
 		}
 
 		public bool IsValid()
@@ -88,13 +90,21 @@ namespace AnimationImporter.Aseprite
 		// parses a JSON file and creates the raw data for ImportedAnimationSheet from it
 		private static ImportedAnimationSheet CreateAnimationSheetFromMetaData(AnimationImportJob job, AnimationImporterSharedConfig config)
 		{
+			var partInfo = GetMetaInfoFromJsonFile(job);
+			
+			if (partInfo == null)
+			{
+				Debug.LogError("Not found part info json file.");
+				return null;
+			}
+
 			string textAssetFilename = job.directoryPathForSprites + "/" + job.name + ".json";
 			TextAsset textAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(textAssetFilename);
 
 			if (textAsset != null)
 			{
 				JSONObject jsonObject = JSONObject.Parse(textAsset.ToString());
-				ImportedAnimationSheet animationSheet = GetAnimationInfo(jsonObject);
+				ImportedAnimationSheet animationSheet = GetAnimationInfo(jsonObject, partInfo);
 
 				if (animationSheet == null)
 				{
@@ -242,7 +252,7 @@ namespace AnimationImporter.Aseprite
 			return success;
 		}
 
-		public CharacterMetaInfo GetMetaInfoFromJsonFile(AnimationImportJob job)
+		public static CharacterMetaInfo GetMetaInfoFromJsonFile(AnimationImportJob job)
 		{
 			string textAssetFilename = job.directoryPathForSprites + "/" + job.metaName + ".json";
 			TextAsset textAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(textAssetFilename);
@@ -256,7 +266,7 @@ namespace AnimationImporter.Aseprite
 			return info;
 		}
 
-		private static ImportedAnimationSheet GetAnimationInfo(JSONObject root)
+		private static ImportedAnimationSheet GetAnimationInfo(JSONObject root, CharacterMetaInfo partInfo)
 		{
 			if (root == null)
 			{
@@ -281,7 +291,7 @@ namespace AnimationImporter.Aseprite
 				return null;
 			}
 
-			if (GetFramesFromJSON(animationSheet, root) == false)
+			if (GetFramesFromJSON(animationSheet, root, partInfo) == false)
 			{
 				return null;
 			}
@@ -380,7 +390,7 @@ namespace AnimationImporter.Aseprite
 			return true;
 		}
 
-		private static bool GetFramesFromJSON(ImportedAnimationSheet animationSheet, JSONObject root)
+		private static bool GetFramesFromJSON(ImportedAnimationSheet animationSheet, JSONObject root, CharacterMetaInfo charaMetaInfo)
 		{
 			var list = root["frames"].Array;
 
@@ -391,8 +401,10 @@ namespace AnimationImporter.Aseprite
 				return false;
 			}
 
-			foreach (var item in list)
+			for (int i = 0; i < list.Length; i++)
 			{
+				var item = list[i];
+				
 				ImportedAnimationFrame frame = new ImportedAnimationFrame();
 
 				var frameValues = item.Obj["frame"].Obj;
@@ -402,6 +414,8 @@ namespace AnimationImporter.Aseprite
 				frame.y = animationSheet.height - (int)frameValues["y"].Number - frame.height; // unity has a different coord system
 
 				frame.duration = (int)item.Obj["duration"].Number;
+
+				frame.headInfo = charaMetaInfo.frames[i].head;
 
 				animationSheet.frames.Add(frame);
 			}

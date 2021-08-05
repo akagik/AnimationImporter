@@ -1,18 +1,15 @@
 {
-    "name": "AnimationImporter.Editor",
+    "name": "AnimationImporter.Runtime",
     "rootNamespace": "",
     "references": [
-        "GUID:ad9bf89103d8b49d7bbffa248f0928d2",
-        "GUID:0a9855555a9111946a84b08e59a1af72"
+        "GUID:ad9bf89103d8b49d7bbffa248f0928d2"
     ],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,
     "precompiledReferences": [],
-    "autoReferenced": false,
+    "autoReferenced": true,
     "defineConstraints": [],
     "versionDefines": [],
     "noEngineReferences": false

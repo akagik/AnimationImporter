@@ -105,19 +105,19 @@ namespace AnimationImporter
 		
 		public void CreateFlipAnimation(ImportedAnimation anim, string basePath, string masterName)
 		{
-			FlipAnimInfo clip;
+			CharaAnimInfo clip;
             string fileName = basePath + "/" + masterName + "_" + anim.name + ".asset";
 			bool isLooping = anim.isLooping;
 
 			// check if animation file already exists
-			clip = AssetDatabase.LoadAssetAtPath<FlipAnimInfo>(fileName);
+			clip = AssetDatabase.LoadAssetAtPath<CharaAnimInfo>(fileName);
 			if (clip != null)
 			{
 				// already exists
 			}
 			else
 			{
-				clip = ScriptableObject.CreateInstance<FlipAnimInfo>();
+				clip = ScriptableObject.CreateInstance<CharaAnimInfo>();
 				AssetDatabase.CreateAsset(clip, fileName);
 			}
 
@@ -125,6 +125,7 @@ namespace AnimationImporter
 			ImportedAnimationFrame[] srcKeyframes = anim.ListFramesAccountingForPlaybackDirection().ToArray();
 
 			clip.sprites = srcKeyframes.Select(f => f.sprite).ToArray();
+			clip.head = srcKeyframes.Select(f => f.headInfo).ToArray();
 			List<FlipAnimationEventTrigger> events = new List<FlipAnimationEventTrigger>();
 
 			for (int i = 0; i < srcKeyframes.Length; i++)
