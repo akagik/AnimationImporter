@@ -14,6 +14,8 @@ namespace AnimationImporter
 		public string name { get { return Path.GetFileNameWithoutExtension(fileName); } }
 		public string fileName { get { return Path.GetFileName(_assetPath); } }
 		public string assetDirectory { get { return GetBasePath(_assetPath); } }
+		
+		public string metaName { get { return Path.GetFileNameWithoutExtension(fileName) + "-meta"; } }
 
 		private string _directoryPathForSprites = "";
 		public string directoryPathForSprites

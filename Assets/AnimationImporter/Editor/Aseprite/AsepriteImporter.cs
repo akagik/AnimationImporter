@@ -6,6 +6,7 @@ using Random = UnityEngine.Random;
 using AnimationImporter.Boomlagoon.JSON;
 using UnityEditor;
 using System.IO;
+using System.Text;
 
 namespace AnimationImporter.Aseprite
 {
@@ -50,6 +51,14 @@ namespace AnimationImporter.Aseprite
 
 		public ImportedAnimationSheet Import(AnimationImportJob job, AnimationImporterSharedConfig config)
 		{
+			if (CreateMetaInfo(job))
+			{
+				var metaInfo = GetMetaInfoFromJsonFile(job);
+
+				// Debug.Log(metaInfo.frames.Length);
+				// Debug.Log(metaInfo.frames[0].head.pos);
+			}
+			
 			if (CreateSpriteAtlasAndMetaFile(job))
 			{
 				AssetDatabase.Refresh();
@@ -102,7 +111,7 @@ namespace AnimationImporter.Aseprite
 				animationSheet.SetNonLoopingAnimations(config.animationNamesThatDoNotLoop);
 
 				// delete JSON file afterwards
-				AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(textAsset));
+				// AssetDatabase.DeleteAsset(AssetDatabase.GetAssetPath(textAsset));
 
 				return animationSheet;
 			}
@@ -113,7 +122,7 @@ namespace AnimationImporter.Aseprite
 
 			return null;
 		}
-
+		
 		/// <summary>
 		/// calls the Aseprite application which then should output a png with all sprites and a corresponding JSON
 		/// </summary>
@@ -121,7 +130,15 @@ namespace AnimationImporter.Aseprite
 		private static bool CreateSpriteAtlasAndMetaFile(AnimationImportJob job)
 		{
 			char delimiter = '\"';
-			string parameters = "--data " + delimiter + job.name + ".json" + delimiter + " --sheet " + delimiter + job.name + ".png" + delimiter + " " + job.sheetConfigParameter + " --list-tags --format json-array " + delimiter + job.fileName + delimiter;
+			
+			StringBuilder paramsBuilder = new StringBuilder();
+			paramsBuilder.Append("--data " + delimiter + job.name + ".json" + delimiter + " --sheet " + delimiter + job.name + ".png" + delimiter + " " + job.sheetConfigParameter + " --list-tags --format json-array ");
+			// paramsBuilder.Append(" --sheet-type packed ");
+			// paramsBuilder.Append(" --trim ");
+			paramsBuilder.Append(" --layer head-pos ");
+			paramsBuilder.Append(delimiter + job.fileName + delimiter);
+
+			string parameters = paramsBuilder.ToString();
 
 			if (!string.IsNullOrEmpty(job.additionalCommandLineArguments))
 			{
@@ -177,6 +194,68 @@ namespace AnimationImporter.Aseprite
 			return success;
 		}
 
+		private static bool CreateMetaInfo(AnimationImportJob job)
+		{
+			char delimiter = '\"';
+			
+			StringBuilder paramsBuilder = new StringBuilder();
+			paramsBuilder.Append(" --script-param o=");
+			paramsBuilder.Append(delimiter + job.metaName + ".json" + delimiter);
+			paramsBuilder.Append(" --script-param filename=");
+			paramsBuilder.Append(delimiter + job.fileName + delimiter);
+			paramsBuilder.Append(" --script ");
+			paramsBuilder.Append(delimiter);
+			paramsBuilder.Append(Path.Combine(AnimationImporter.Instance.asepriteScriptsPath, "Export Meta Json.lua"));
+			paramsBuilder.Append(delimiter);
+
+			string parameters = paramsBuilder.ToString();
+
+			bool success = CallAsepriteCLI(AnimationImporter.Instance.asepritePath, job.assetDirectory, parameters) == 0;
+
+			// move png and json file to subfolder
+			if (success && job.directoryPathForSprites != job.assetDirectory)
+			{
+				// create subdirectory
+				if (!Directory.Exists(job.directoryPathForSprites))
+				{
+					Directory.CreateDirectory(job.directoryPathForSprites);
+				}
+
+				// check and copy json file
+				string jsonSource = job.assetDirectory + "/" + job.metaName + ".json";
+				string jsonTarget = job.directoryPathForSprites + "/" + job.metaName + ".json";
+				if (File.Exists(jsonSource))
+				{
+					if (File.Exists(jsonTarget))
+					{
+						File.Delete(jsonTarget);
+					}
+					File.Move(jsonSource, jsonTarget);
+				}
+				else
+				{
+					Debug.LogWarning("Calling Aseprite resulted in no json data file. Wrong Aseprite version?");
+					return false;
+				}
+			}
+
+			return success;
+		}
+
+		public CharacterMetaInfo GetMetaInfoFromJsonFile(AnimationImportJob job)
+		{
+			string textAssetFilename = job.directoryPathForSprites + "/" + job.metaName + ".json";
+			TextAsset textAsset = AssetDatabase.LoadAssetAtPath<TextAsset>(textAssetFilename);
+
+			if (textAsset == null)
+			{
+				return null;
+			}
+
+			var info = JsonUtility.FromJson<CharacterMetaInfo>(textAsset.text);
+			return info;
+		}
+
 		private static ImportedAnimationSheet GetAnimationInfo(JSONObject root)
 		{
 			if (root == null)
@@ -224,10 +303,15 @@ namespace AnimationImporter.Aseprite
 			start.UseShellExecute = false;
 			start.WorkingDirectory = workingDirectory;
 
+			// Debug.Log("" + start.WorkingDirectory);
+			// Debug.Log("" + start.FileName);
+			// Debug.Log("" + start.Arguments);
+
 			// Run the external process & wait for it to finish
 			using (System.Diagnostics.Process proc = System.Diagnostics.Process.Start(start))
 			{
 				proc.WaitForExit();
+
 				// Retrieve the app's exit code
 				return proc.ExitCode;
 			}
