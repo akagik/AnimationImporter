@@ -1,3 +1,8 @@
+# AnimationImporter for Horizon
+
+このプロジェクトは Horizon 向けに Animation Importer を改修したレポジトリです。
+https://github.com/talecrafter/AnimationImporter
+
 Pixelart Animation Importer for Unity
 ====
 
