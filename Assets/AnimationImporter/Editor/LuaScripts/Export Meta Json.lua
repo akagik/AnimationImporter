@@ -57,7 +57,13 @@ local function execute()
             
             if info["index_layer"] ~= nil then
                 local index = getHeadIndex(info["index_layer"], i)
-                json = json .. "        \"index\":" .. tostring(index) .. ",\n"
+                local unityIndex = index;
+                
+                if unityIndex ~= -1 then
+                    unityIndex = unityIndex - 1
+                end
+                
+                json = json .. "        \"index\":" .. tostring(unityIndex) .. ",\n"
             end
             
             if info["pos_layer"] ~= nil then
